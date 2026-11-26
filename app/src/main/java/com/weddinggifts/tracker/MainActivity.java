@@ -24,6 +24,15 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import com.google.mlkit.vision.barcode.BarcodeScanner;
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
+import com.google.mlkit.vision.barcode.BarcodeScanning;
+import com.google.mlkit.vision.barcode.common.Barcode;
+import com.google.mlkit.vision.common.InputImage;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import androidx.core.content.FileProvider;
 import androidx.webkit.WebViewAssetLoader;
 
@@ -44,10 +53,12 @@ public class MainActivity extends Activity {
     private static final String START_URL = "https://appassets.androidplatform.net/assets/index.html";
     private static final String APP_HOST = "appassets.androidplatform.net";
     private static final int PICK_FILE = 1001;
+    private static final int SCAN_ID = 1002;
 
     private WebView web;
     private WebView printView;                 // kept alive until printing finishes
     private ValueCallback<Uri[]> fileCallback;
+    private File scanPhoto;                    // temporary photo of the ID, deleted right after reading
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,6 +127,15 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SCAN_ID) {
+            if (resultCode == RESULT_OK && scanPhoto != null && scanPhoto.length() > 0) {
+                readIdBarcode(scanPhoto);
+            } else {
+                deleteScanPhoto();
+                sendScanResult(errorJson("cancelled"));
+            }
+            return;
+        }
         if (requestCode == PICK_FILE) {
             if (fileCallback != null) {
                 Uri[] result = null;
@@ -155,6 +175,109 @@ public class MainActivity extends Activity {
         public void print(final String html, final String jobName) {
             runOnUiThread(() -> printHtml(html, jobName));
         }
+
+        @JavascriptInterface
+        public void scanId() {
+            runOnUiThread(MainActivity.this::startIdPhoto);
+        }
+    }
+
+    /* ---------------- Scan ID: photo of the license barcode, read on the phone ---------------- */
+
+    /** Opens the camera app to photograph the barcode on the back of the ID. */
+    private void startIdPhoto() {
+        try {
+            File dir = new File(getCacheDir(), "scans");
+            //noinspection ResultOfMethodCallIgnored
+            dir.mkdirs();
+            scanPhoto = new File(dir, "id-scan.jpg");
+            if (scanPhoto.exists()) //noinspection ResultOfMethodCallIgnored
+                scanPhoto.delete();
+            Uri out = FileProvider.getUriForFile(this, getPackageName() + ".files", scanPhoto);
+            Intent cam = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            cam.putExtra(MediaStore.EXTRA_OUTPUT, out);
+            cam.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivityForResult(cam, SCAN_ID);
+        } catch (ActivityNotFoundException e) {
+            sendScanResult(errorJson("No camera app was found on this phone."));
+        } catch (Exception e) {
+            sendScanResult(errorJson("Couldn't open the camera: " + e.getMessage()));
+        }
+    }
+
+    /** Reads the PDF417 barcode with ML Kit's built-in (offline) model. Keeps only name and address. */
+    private void readIdBarcode(File photo) {
+        final InputImage image;
+        try {
+            image = InputImage.fromFilePath(this, Uri.fromFile(photo));
+        } catch (Exception e) {
+            deleteScanPhoto();
+            sendScanResult(errorJson("Couldn't read the photo."));
+            return;
+        }
+        BarcodeScannerOptions options = new BarcodeScannerOptions.Builder()
+                .setBarcodeFormats(Barcode.FORMAT_PDF417)
+                .build();
+        final BarcodeScanner scanner = BarcodeScanning.getClient(options);
+        scanner.process(image)
+                .addOnSuccessListener(barcodes -> {
+                    JSONObject result = new JSONObject();
+                    try {
+                        if (barcodes.isEmpty()) {
+                            result.put("error", "No ID barcode was found. Try again with the barcode filling most of the photo, in good light and in focus.");
+                        } else {
+                            Barcode b = barcodes.get(0);
+                            Barcode.DriverLicense dl = b.getDriverLicense();
+                            if (dl != null && (notEmpty(dl.getLastName()) || notEmpty(dl.getAddressStreet()))) {
+                                result.put("last_name", nz(dl.getLastName()));
+                                result.put("first_names", nz(dl.getFirstName()));
+                                result.put("street", nz(dl.getAddressStreet()));
+                                result.put("city", nz(dl.getAddressCity()));
+                                result.put("state", nz(dl.getAddressState()));
+                                result.put("zip", nz(dl.getAddressZip()));
+                            } else {
+                                // Let the page's own parser pick out the name and address fields.
+                                result.put("raw", nz(b.getRawValue()));
+                            }
+                        }
+                    } catch (JSONException ignored) {
+                    }
+                    deleteScanPhoto();
+                    scanner.close();
+                    sendScanResult(result.toString());
+                })
+                .addOnFailureListener(e -> {
+                    deleteScanPhoto();
+                    scanner.close();
+                    sendScanResult(errorJson("Couldn't read the barcode: " + e.getMessage()));
+                });
+    }
+
+    private void sendScanResult(String json) {
+        if (web == null) return;
+        web.evaluateJavascript("window.onIdScanned && window.onIdScanned(" + JSONObject.quote(json) + ")", null);
+    }
+
+    private static String errorJson(String message) {
+        JSONObject o = new JSONObject();
+        try {
+            o.put("error", message);
+        } catch (JSONException ignored) {
+        }
+        return o.toString();
+    }
+
+    private void deleteScanPhoto() {
+        if (scanPhoto != null && scanPhoto.exists()) //noinspection ResultOfMethodCallIgnored
+            scanPhoto.delete();
+    }
+
+    private static boolean notEmpty(String s) {
+        return s != null && !s.trim().isEmpty();
+    }
+
+    private static String nz(String s) {
+        return s == null ? "" : s.trim();
     }
 
     /** Saves a copy to Downloads/Wedding Gifts, then offers the share sheet (Drive, Gmail, Messages...). */

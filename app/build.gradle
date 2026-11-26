@@ -45,4 +45,6 @@ android {
 dependencies {
     implementation 'androidx.webkit:webkit:1.12.1'
     implementation 'androidx.core:core:1.13.1'
+    // Reads the barcode on the back of an ID. Bundled model: works offline, nothing is downloaded or sent.
+    implementation 'com.google.mlkit:barcode-scanning:17.3.0'
 }

@@ -158,6 +158,9 @@ table.rt{border-collapse:collapse;width:100%;font-size:14px}
 .notice{background:#fff8e6;border:1px solid #ecd9a6;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:14px}
 .notice b{display:block;margin-bottom:2px}
 .notice .btn{margin-top:8px}
+.scanbox{margin:4px 0 2px;padding:10px 12px;border:1px dashed var(--field);border-radius:12px;background:#fbfaf7}
+.scanbox .btn{width:100%}
+.scanbox .hint{margin-top:6px}
 .danger-zone{margin-top:28px;padding-top:12px;border-top:1px solid var(--line)}
 </style>
 </head>
@@ -179,6 +182,7 @@ table.rt{border-collapse:collapse;width:100%;font-size:14px}
 </nav>
 <div id="toast" class="toast"></div>
 <input type="file" id="restoreFile" accept=".json,application/json" class="hidden">
+<input type="file" id="idPhoto" accept="image/*" capture="environment" class="hidden">
 
 <script>
 "use strict";
@@ -1004,7 +1008,10 @@ function showErr(msg) {
 /* ===================== givers ===================== */
 function giverFields(d) {
   d = d || {};
-  return `
+  return `${canScanId() ? `<div class="scanbox"><button class="btn ghost" type="button" data-scanid>
+      <svg viewBox="0 0 24 24" width="20" height="20"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h1M6 12h1M6 15h1M9 9v6M11 9v6M13.5 9v6M16 9v6M18 9v6"/></svg>
+      Scan ID to fill name &amp; address</button>
+      <p class="hint">Photograph the barcode on the back of a driver's license or state ID. Only the name and address are kept.</p></div>` : ""}
     <div class="two">
       <div><label for="glast">Last name <span class="req">*</span></label>
         <input id="glast" name="last_name" value="${esc(d.last_name)}" autocapitalize="words" placeholder="Smith"></div>
@@ -1026,6 +1033,77 @@ function giverFields(d) {
     </div>
     <label for="gnotes">Notes</label><textarea id="gnotes" name="notes" rows="2" placeholder="e.g. Aunt on Dad's side">${esc(d.notes)}</textarea>`;
 }
+/* ---- Scan ID: reads the PDF417 barcode on the back of US/Canadian driver's licenses and state IDs ---- */
+let WEB_SCAN = false;
+function canScanId() { return ANDROID ? !!(window.AndroidBridge && AndroidBridge.scanId) : WEB_SCAN; }
+async function detectWebScan() {
+  try { WEB_SCAN = "BarcodeDetector" in window && (await BarcodeDetector.getSupportedFormats()).includes("pdf417"); }
+  catch (e) { WEB_SCAN = false; }
+}
+const titleCase = s => String(s || "").toLowerCase().replace(/\b([a-z])/g, c => c.toUpperCase())
+  .replace(/\b(Po|Nw|Ne|Sw|Se|Apt)\b/g, w => w.toUpperCase() === "APT" ? "Apt" : w.toUpperCase())
+  .replace(/\b(\d+)(St|Nd|Rd|Th)\b/g, (m, n, sfx) => n + sfx.toLowerCase())
+  .replace(/\b(\d+[a-z])\b/g, u => u.toUpperCase());               // unit numbers like 4B
+function fmtZip(z) {
+  z = String(z || "").replace(/[^0-9A-Za-z]/g, "");
+  if (/^\d{9}$/.test(z)) return z.endsWith("0000") ? z.slice(0, 5) : z.slice(0, 5) + "-" + z.slice(5);
+  if (/^\d{5}/.test(z)) return z.slice(0, 5);
+  return z.toUpperCase();                         // Canadian postal codes
+}
+/* Parses AAMVA license text. Returns only name and address; everything else is ignored. */
+function parseAAMVA(raw) {
+  const f = {};
+  for (let line of String(raw || "").split(/[\r\n\x1e]+/)) {
+    let m = line.match(/^\s*(D[A-Z]{2})(.*)$/);
+    if (!m) { const i = line.search(/(DL|ID)(D[A-Z]{2})/); if (i >= 0) m = line.slice(i + 2).match(/^(D[A-Z]{2})(.*)$/); }
+    if (m && !(m[1] in f)) f[m[1]] = m[2].trim();
+  }
+  let last = f.DCS || f.DAB || "", first = f.DAC || f.DCT || "", middle = f.DAD || "";
+  if (!last && f.DAA) { const p = f.DAA.split(/[,$]/); last = p[0] || ""; first = p[1] || ""; middle = p[2] || ""; }
+  if (first.includes(",")) [first, middle] = first.split(",", 2);   // some states: "FIRST,MIDDLE" in DCT
+  const out = {last_name: titleCase(last.trim()), first_names: titleCase(first.trim()), middle: titleCase((middle || "").trim()),
+               street: titleCase([f.DAG, f.DAH].filter(Boolean).join(" ")), city: titleCase(f.DAI),
+               state: (f.DAJ || "").trim().toUpperCase(), zip: fmtZip(f.DAK)};
+  return (out.last_name || out.street) ? out : null;
+}
+function applyScan(form, data) {
+  if (!form || !document.body.contains(form)) return;
+  if (!data || (!data.last_name && !data.street)) { alert("No ID barcode could be read. Try again with the barcode filling most of the photo, in good light and in focus."); return; }
+  const set = (name, val, onlyIfEmpty) => { const el = form.elements[name]; if (el && val && (!onlyIfEmpty || !el.value.trim())) el.value = val; };
+  set("last_name", data.last_name, true);
+  set("first_names", data.first_names, true);
+  set("street", data.street); set("city", data.city); set("state", data.state); set("zip", data.zip);
+  App.formDirty = true;
+  toast("Filled from ID \u2014 please check before saving");
+}
+/* Called by the Android app after a scan. json: {last_name, first_names, street, city, state, zip} or {raw} or {error} */
+window.onIdScanned = function (json) {
+  let d = null;
+  try { d = typeof json === "string" ? JSON.parse(json) : json; } catch (e) {}
+  if (d && d.error) { if (d.error !== "cancelled") alert(d.error); return; }
+  if (d && d.raw && !d.last_name) d = parseAAMVA(d.raw);
+  else if (d) d = {last_name: titleCase(d.last_name), first_names: titleCase(d.first_names), street: titleCase(d.street),
+                   city: titleCase(d.city), state: String(d.state || "").toUpperCase(), zip: fmtZip(d.zip)};
+  applyScan(App.scanForm, d);
+};
+function bindScan(root, form) {
+  const b = $("[data-scanid]", root); if (!b) return;
+  b.addEventListener("click", () => {
+    App.scanForm = form;
+    if (ANDROID) { AndroidBridge.scanId(); return; }
+    $("#idPhoto").click();
+  });
+}
+$("#idPhoto").addEventListener("change", async e => {
+  const file = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!file) return;
+  try {
+    const bmp = await createImageBitmap(file);
+    const codes = await new BarcodeDetector({formats: ["pdf417"]}).detect(bmp);
+    applyScan(App.scanForm, codes.length ? parseAAMVA(codes[0].rawValue) : null);
+  } catch (err) { alert("Couldn't read the photo: " + (err.message || err)); }
+});
+
 function openGiverModal(onSaved) {
   const m = document.createElement("div");
   m.className = "modal";
@@ -1035,6 +1113,7 @@ function openGiverModal(onSaved) {
     </form></div>`;
   document.body.appendChild(m);
   const form = $("form", m), close = () => m.remove();
+  bindScan(m, form);
   $("[data-cancel]", m).addEventListener("click", close);
   m.addEventListener("click", e => { if (e.target === m) close(); });
   setTimeout(() => $("#glast", m).focus(), 50);
@@ -1100,6 +1179,7 @@ function viewGiverPage(id) {
         ${gv ? `<button class="btn danger" type="button" id="delGiver">Delete giver</button>` : ""}</div>
     </form>`);
   const form = $("#giverForm");
+  bindScan(form, form);
   form.addEventListener("input", () => { App.formDirty = true; });
   form.addEventListener("submit", async e => {
     e.preventDefault();
@@ -1241,6 +1321,7 @@ async function viewSettings() {
     return;
   }
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  if (!ANDROID) await detectWebScan();
   if (!ANDROID && "serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname))) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
