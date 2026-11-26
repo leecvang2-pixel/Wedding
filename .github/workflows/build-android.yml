@@ -1,0 +1,54 @@
+# Builds the Android app (WeddingGifts.apk) on GitHub's servers and publishes it
+# on this repository's Releases page. Runs on every change to the app, or on demand
+# from the Actions tab ("Run workflow").
+name: Build Android app
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore: [ 'docs/**', 'README.md' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Prepare signing key
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          if [ -n "$SIGNING_KEY" ]; then
+            echo "$SIGNING_KEY" | base64 -d > "$RUNNER_TEMP/wedding-gifts.jks"
+            echo "SIGNING_KEYSTORE_FILE=$RUNNER_TEMP/wedding-gifts.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No SIGNING_KEY secret found. Using a temporary key, so future builds will not install as updates over this one."
+          fi
+
+      - name: Build the app
+        env:
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk WeddingGifts.apk
+
+      - name: Publish on the Releases page
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Wedding Gifts (build ${{ github.run_number }})
+          body: On an Android phone, tap WeddingGifts.apk below to download it, then open it to install.
+          files: WeddingGifts.apk
+          make_latest: true
