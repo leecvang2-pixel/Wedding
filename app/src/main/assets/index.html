@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f2a3a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Wedding Gifts">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; object-src 'none'; base-uri 'none'">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Wedding Gift Tracker</title>
+<style>
+:root{
+  --bg:#f7f5f0; --card:#fff; --ink:#1f2a3a; --muted:#6b7280; --line:#e5e1d8; --field:#cfcac0;
+  --accent:#8a6d3b; --cash:#2f6f4f; --cardc:#2f5d8a; --est:#8a5a2b;
+  --warn:#a16207; --ok:#2f7d5b; --danger:#b42318; --radius:14px; --tabh:62px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom) + 20px)}
+svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+a{color:var(--cardc)}
+.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;background:var(--ink);color:#fff}
+.brand{font-family:Georgia,"Times New Roman",serif;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{background:transparent;border:0;color:#fff;padding:6px;border-radius:8px;display:grid;place-items:center;cursor:pointer}
+.iconbtn svg{width:22px;height:22px}
+main{max-width:760px;margin:0 auto;padding:16px}
+body.wide main{max-width:1100px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:normal;font-size:25px;margin:4px 0 14px}
+h3{font-size:15px;margin:22px 0 8px;color:#374151}
+.tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);z-index:10}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 6px;color:var(--muted);
+  text-decoration:none;font-size:11.5px;position:relative}
+.tabbar a.on{color:var(--ink);font-weight:600}
+.tabbar svg{width:23px;height:23px}
+.tabbar a.add .plus{background:var(--accent);color:#fff;border-radius:50%;width:46px;height:46px;display:grid;place-items:center;
+  margin-top:-20px;box-shadow:0 4px 12px rgba(0,0,0,.2);border:3px solid #fff}
+.badge{position:absolute;top:3px;left:calc(50% + 5px);background:var(--warn);color:#fff;border-radius:10px;font-size:11px;
+  padding:0 6px;line-height:18px;font-weight:700}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;
+  margin-bottom:10px;color:inherit;text-decoration:none}
+a.card:active{background:#f3f1ec}
+.row1{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.name{font-weight:650}
+.amt{font-weight:650;white-space:nowrap}
+.c-cash{color:var(--cash)} .c-card{color:var(--cardc)} .c-est{color:var(--est)}
+.meta{margin-top:3px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-block;font-size:12px;padding:1px 9px;border-radius:999px;background:#eef0f3;color:#374151;font-weight:600}
+.chip.cash{background:#e5f1ea;color:var(--cash)} .chip.card{background:#e6edf6;color:var(--cardc)} .chip.est{background:#f4ece2;color:var(--est)}
+.muted{color:var(--muted);font-size:14px}
+.what{margin-top:5px;font-size:15px}
+.ty{margin-top:6px;font-size:13px;font-weight:600} .ty.sent{color:var(--ok)} .ty.pending{color:var(--warn)}
+.form label{display:block;font-size:14px;font-weight:650;margin:14px 0 6px}
+.req{color:var(--danger)}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--field);border-radius:10px;
+  background:#fff;color:inherit;-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,#6b7280 50%),linear-gradient(135deg,#6b7280 50%,transparent 50%);
+  background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+input[type=date]{min-height:46px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+textarea{resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.three{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}
+.inline{display:flex;gap:8px} .inline select{flex:1}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form .seg label.segbtn{margin:0;font-weight:normal}
+.segbtn{position:relative}
+.segbtn input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.segbtn span{display:block;text-align:center;padding:12px 6px;border:1px solid var(--field);border-radius:10px;background:#fff;
+  font-weight:650;font-size:15px;cursor:pointer}
+.segbtn input:checked + span{background:var(--ink);color:#fff;border-color:var(--ink)}
+.segbtn input:focus-visible + span{outline:2px solid var(--accent)}
+.seg .segbtn:last-child{grid-column:1 / -1}
+.form label.check{display:flex;align-items:center;gap:10px;margin:0}
+.check input{width:24px;height:24px;-webkit-appearance:auto;appearance:auto;accent-color:var(--ok)}
+.tybox{margin-top:18px;padding:12px;border:1px dashed var(--field);border-radius:12px;background:#fbfaf7}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;border-radius:10px;
+  border:1px solid var(--ink);background:var(--ink);color:#fff;font:inherit;font-weight:650;text-decoration:none;cursor:pointer;
+  font-size:15px;line-height:1.2}
+.btn.ghost{background:#fff;color:var(--ink)}
+.btn.accent{background:var(--accent);border-color:var(--accent)}
+.btn.danger{background:#fff;color:var(--danger);border-color:#e4b4ae}
+.btn.ok{background:var(--ok);border-color:var(--ok)}
+.btn.small{padding:8px 12px;font-size:14px}
+.btn[disabled]{opacity:.6}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px} .actions .btn{flex:1 1 150px}
+.filters{display:grid;gap:8px;margin-bottom:10px}
+.more{font-size:14px;color:var(--cardc);background:none;border:0;padding:4px 0;font:inherit;font-size:14px;cursor:pointer;text-align:left}
+.totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
+.tot{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 10px;border-top:3px solid}
+.tot b{display:block;font-size:15.5px} .tot span{font-size:11.5px;color:var(--muted)}
+.tot.cash{border-top-color:var(--cash)} .tot.card{border-top-color:var(--cardc)} .tot.est{border-top-color:var(--est)}
+.count{font-size:13px;color:var(--muted);margin:0 2px 8px}
+.hidden{display:none!important}
+.banner{background:#fdecea;color:#7a1c12;padding:10px 16px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(var(--tabh) + 22px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;
+  pointer-events:none;z-index:50;white-space:nowrap}
+.toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(15,20,30,.45);display:flex;align-items:flex-end;justify-content:center;z-index:40}
+.sheet{background:var(--bg);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;
+  padding:16px 16px calc(18px + env(safe-area-inset-bottom))}
+@media(min-width:700px){.modal{align-items:center}.sheet{border-radius:18px}}
+.formerr{background:#fdecea;color:#7a1c12;border-radius:10px;padding:10px 12px;margin-top:14px;font-size:14px}
+.empty{text-align:center;color:var(--muted);padding:36px 12px}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.addr{white-space:pre-line;font-size:14px;color:#374151;margin-top:8px;background:#f6f4ef;border-radius:8px;padding:7px 9px}
+.segtabs{display:flex;background:#ebe7df;border-radius:10px;padding:3px;margin-bottom:12px}
+.segtabs button{flex:1;border:0;background:transparent;padding:9px;border-radius:8px;font:inherit;font-weight:650;color:var(--muted);cursor:pointer}
+.segtabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.cardrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}
+.contact{display:grid;gap:6px;margin:6px 0 4px;font-size:15px}
+.kv{display:flex;gap:8px} .kv span:first-child{color:var(--muted);min-width:62px}
+.urls code{display:block;font-size:17px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;user-select:all}
+.linklist{display:grid;gap:8px}
+/* ---- report ---- */
+.rpt-head h1{margin-bottom:2px}
+.report h2{font-family:Georgia,"Times New Roman",serif;font-weight:normal;font-size:20px;margin:26px 0 10px;
+  border-bottom:1px solid var(--line);padding-bottom:6px}
+.sumcards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sumcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;border-top:4px solid}
+.sumcard.cash{border-top-color:var(--cash)} .sumcard.card{border-top-color:var(--cardc)} .sumcard.est{border-top-color:var(--est)}
+.sumcard .v{font-size:21px;font-weight:700} .sumcard .l{font-size:13px;color:var(--muted)}
+.tablewrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:10px}
+table.rt{border-collapse:collapse;width:100%;font-size:14px}
+.rt th{text-align:left;background:#eef0f3;font-size:12px;text-transform:uppercase;letter-spacing:.3px;padding:8px;white-space:nowrap}
+.rt td{padding:7px 8px;border-top:1px solid #eceae4;vertical-align:top}
+.rt .num{text-align:right;white-space:nowrap}
+.rt th.num{text-align:right}
+.rt tr.total td{font-weight:700;border-top:2px solid var(--ink);background:#fff!important}
+.rt tr.group td{font-weight:700}
+.rt tr.sub td:first-child{padding-left:26px;color:#374151}
+.rt.zebra tbody tr:nth-child(even) td{background:#fafaf8}
+.rt td.wrap{min-width:180px}
+.note{font-size:13px;color:var(--muted);font-style:italic;margin-top:8px}
+@media(max-width:430px){.sumcards,.totals{grid-template-columns:1fr 1fr 1fr}.sumcard .v{font-size:16px}.tot b{font-size:14px}}
+@media print{
+  @page{size:landscape;margin:0.5in}
+  body{background:#fff;padding:0;font-size:10pt;color:#000}
+  .topbar,.tabbar,.no-print,.banner,.toast,.modal{display:none!important}
+  main,body.wide main{max-width:none;padding:0;margin:0}
+  .tablewrap{overflow:visible;border:0;border-radius:0}
+  table.rt{font-size:9pt}
+  .rt th{background:#e7e9ee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sumcard{border-color:#bbb;-webkit-print-color-adjust:exact;print-color-adjust:exact;break-inside:avoid}
+  .pb{break-before:page}
+  tr{break-inside:avoid}
+  thead{display:table-header-group}
+  .report h1{font-size:20pt}
+}
+.notice{background:#fff8e6;border:1px solid #ecd9a6;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:14px}
+.notice b{display:block;margin-bottom:2px}
+.notice .btn{margin-top:8px}
+.danger-zone{margin-top:28px;padding-top:12px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand" id="brand">Wedding Gifts</div>
+  <button class="iconbtn" id="settingsBtn" aria-label="Settings and backup" title="Settings and backup">
+    <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+  </button>
+</header>
+<div id="banner" class="banner hidden"></div>
+<main id="view"><div class="empty">Loading…</div></main>
+<nav class="tabbar" id="tabbar">
+  <a href="#/gifts" data-tab="gifts"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>Gifts</a>
+  <a href="#/givers" data-tab="givers"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Givers</a>
+  <a href="#/add" data-tab="add" class="add"><span class="plus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Add</a>
+  <a href="#/thanks" data-tab="thanks"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>Thank-yous<span class="badge hidden" id="tyBadge"></span></a>
+  <a href="#/report" data-tab="report"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Report</a>
+</nav>
+<div id="toast" class="toast"></div>
+<input type="file" id="restoreFile" accept=".json,application/json" class="hidden">
+
+<script>
+"use strict";
+/* =====================================================================
+   Wedding Gift Tracker - phone edition.
+   Everything is stored on this device (IndexedDB). Nothing is ever sent
+   anywhere. After the first visit the app works with no network at all.
+   ===================================================================== */
+
+/* ===================== helpers ===================== */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = c => (c === null || c === undefined || c === "") ? "" :
+  "$" + (c / 100).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const toInput = c => (c === null || c === undefined) ? "" : (c / 100).toFixed(2);
+const TYPES = ["Cash", "Check", "Electronic Payment", "Gift Card", "Physical Gift"];
+const MONEY_TYPES = ["Cash", "Check", "Electronic Payment", "Gift Card"];
+const CASH_TYPES = ["Cash", "Check", "Electronic Payment"];
+const EVENTS = ["Shower", "Wedding Day", "Mailed / Delivered", "Registry", "Other"];
+const SIDES = ["Bride's family", "Groom's family", "Friend", "Co-worker", "Other"];
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+const nowISO = () => new Date().toISOString();
+function fmtDate(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", {month: "short", day: "numeric", year: "numeric"});
+}
+function mdy(iso) { if (!iso) return ""; const [y, m, d] = iso.split("-"); return `${m}/${d}/${y}`; }
+const byName = (a, b) => a.localeCompare(b, undefined, {sensitivity: "base"});
+function uuid() {
+  if (window.crypto && crypto.randomUUID) { try { return crypto.randomUUID(); } catch (e) {} }
+  const b = new Uint8Array(16); crypto.getRandomValues(b); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  const h = Array.from(b, x => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+function catClass(g) {
+  return CASH_TYPES.includes(g.contribution_type) ? "cash" : g.contribution_type === "Gift Card" ? "card" : "est";
+}
+function details(g) {
+  const t = g.contribution_type;
+  if (t === "Physical Gift") return g.description;
+  if (t === "Gift Card") return g.card_retailer ? g.card_retailer + " gift card" : "Gift card";
+  if (t === "Check") return g.payment_ref ? "Check #" + g.payment_ref : "Check";
+  if (t === "Electronic Payment") return g.payment_ref ? "Electronic payment (" + g.payment_ref + ")" : "Electronic payment";
+  return "Cash";
+}
+function giftValueText(g) {
+  if (g.contribution_type === "Physical Gift") return g.est_cents != null ? "est. " + money(g.est_cents) : "no estimate";
+  return money(g.amount_cents);
+}
+function address(gv) {
+  if (!gv) return "";
+  const line2 = [gv.city, [gv.state, gv.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  return [gv.street, line2].filter(Boolean).join("\n");
+}
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.classList.remove("show"), 2400);
+}
+function showBanner(msg) { const b = $("#banner"); b.textContent = msg; b.classList.remove("hidden"); }
+function view(html) { $("#view").innerHTML = html; }
+const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isTouch = () => window.matchMedia && matchMedia("(pointer: coarse)").matches;
+/* Running inside the Android app (APK)? Then files and printing go through the app. */
+const ANDROID = (() => { try { return !!(window.AndroidBridge && window.AndroidBridge.isApp()); } catch (e) { return false; } })();
+
+/* ===================== on-device storage ===================== */
+const Store = {
+  _db: null, mode: "indexeddb",
+  open() {
+    if (this._db) return Promise.resolve(this._db);
+    return new Promise((res, rej) => {
+      let r;
+      try { r = indexedDB.open("wedding-gift-tracker", 1); } catch (e) { return rej(e); }
+      r.onupgradeneeded = () => r.result.createObjectStore("kv");
+      r.onsuccess = () => { this._db = r.result; res(this._db); };
+      r.onerror = () => rej(r.error);
+      r.onblocked = () => rej(new Error("Storage is blocked"));
+    });
+  },
+  async load() {
+    try {
+      const db = await this.open();
+      return await new Promise((res, rej) => {
+        const q = db.transaction("kv").objectStore("kv").get("data");
+        q.onsuccess = () => res(q.result || null); q.onerror = () => rej(q.error);
+      });
+    } catch (e) {
+      this.mode = "localstorage";
+      const s = localStorage.getItem("wgt_data");
+      return s ? JSON.parse(s) : null;
+    }
+  },
+  async save(data) {
+    if (this.mode === "localstorage") { localStorage.setItem("wgt_data", JSON.stringify(data)); return; }
+    const db = await this.open();
+    await new Promise((res, rej) => {
+      const tx = db.transaction("kv", "readwrite");
+      tx.objectStore("kv").put(JSON.parse(JSON.stringify(data)), "data");
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
+    });
+  }
+};
+
+let DB = null;
+function emptyDB() {
+  return {format: "wedding-gift-tracker", version: 1, settings: {couple: "", wedding_date: ""}, givers: [], gifts: [],
+          meta: {created_at: nowISO(), last_backup: null, changes_since_backup: 0}};
+}
+async function commit() {
+  DB.meta.changes_since_backup = (DB.meta.changes_since_backup || 0) + 1;
+  try { await Store.save(DB); }
+  catch (e) { throw new Error("Couldn't save on this phone (" + (e && e.message || e) + "). Is the phone's storage full?"); }
+  App.state = buildState(); updateChrome();
+}
+
+/* ===================== validation (same rules as the design) ===================== */
+function clean(v, limit = 2000) {
+  if (v === null || v === undefined) return "";
+  return String(v).replace(/\r\n/g, "\n").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "").trim().slice(0, limit);
+}
+function parseMoney(v, label) {
+  const t = String(v ?? "").replace(/[$,\s]/g, "");
+  if (t === "") return null;
+  if (!/^\d*\.?\d*$/.test(t) || t === ".") throw new Error(`${label} must be a dollar amount, like 100 or 75.50.`);
+  const n = Number(t);
+  if (n > 1000000) throw new Error(`${label} looks too large - please check it.`);
+  return Math.round(n * 100);
+}
+function parseDate(v, label, required = true) {
+  const t = clean(v, 20);
+  if (!t) { if (required) throw new Error(`${label} is required.`); return null; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || isNaN(new Date(t + "T00:00:00"))) throw new Error(`${label} must be a valid date.`);
+  if (t > todayISO()) throw new Error(`${label} can't be in the future.`);
+  return t;
+}
+function validateGiver(d) {
+  const g = {last_name: clean(d.last_name, 100), first_names: clean(d.first_names, 150), side: clean(d.side, 50),
+             phone: clean(d.phone, 40), email: clean(d.email, 150), street: clean(d.street, 200), city: clean(d.city, 100),
+             state: clean(d.state, 50), zip: clean(d.zip, 20), notes: clean(d.notes)};
+  if (!g.last_name) throw new Error("Last name (or family / company name) is required.");
+  if (g.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(g.email)) throw new Error("That email address doesn't look right.");
+  return g;
+}
+function validateGift(d) {
+  const giver = DB.givers.find(x => x.id === d.giver_id && !x.deleted);
+  if (!d.giver_id) throw new Error("Please choose who the gift is from (or tap + New).");
+  if (!giver) throw new Error("That giver no longer exists - please choose again.");
+  const t = clean(d.contribution_type, 40);
+  if (!TYPES.includes(t)) throw new Error("Please choose the type of contribution.");
+  const g = {
+    giver_id: d.giver_id, date_received: parseDate(d.date_received, "Date received"), event: clean(d.event, 50),
+    contribution_type: t, amount_cents: parseMoney(d.amount, "Amount"), card_retailer: clean(d.card_retailer, 100),
+    description: clean(d.description), est_value_cents: parseMoney(d.est_value, "Estimated value"),
+    payment_ref: clean(d.payment_ref, 100), notes: clean(d.notes), thank_you_sent: d.thank_you_sent ? 1 : 0,
+    thank_you_date: parseDate(d.thank_you_date, "Thank-you date", false), entered_by: clean(d.entered_by, 60)
+  };
+  // keep only the fields that belong to this type, so totals can never mix
+  if (MONEY_TYPES.includes(t)) {
+    if (g.amount_cents === null) throw new Error(`Please enter the ${t.toLowerCase()} amount.`);
+    g.description = ""; g.est_value_cents = null;
+  } else {
+    if (!g.description) throw new Error("Please describe the gift.");
+    g.amount_cents = null;
+  }
+  if (t !== "Gift Card") g.card_retailer = "";
+  if (t !== "Check" && t !== "Electronic Payment") g.payment_ref = "";
+  if (g.thank_you_sent) g.thank_you_date = g.thank_you_date || todayISO(); else g.thank_you_date = null;
+  return g;
+}
+
+/* ===================== data operations ===================== */
+const Local = {
+  async saveSettings(d) {
+    const wd = clean(d.wedding_date, 20);
+    if (wd && !/^\d{4}-\d{2}-\d{2}$/.test(wd)) throw new Error("Wedding date must be a valid date.");
+    DB.settings = {couple: clean(d.couple, 120), wedding_date: wd};
+    await commit();
+  },
+  async saveGiver(id, data) {
+    const g = validateGiver(data), t = nowISO();
+    if (id) {
+      const rec = DB.givers.find(x => x.id === id && !x.deleted);
+      if (!rec) throw new Error("That giver no longer exists.");
+      Object.assign(rec, g, {updated_at: t});
+    } else {
+      id = uuid(); DB.givers.push({id, ...g, created_at: t, updated_at: t});
+    }
+    await commit(); return id;
+  },
+  async deleteGiver(id) {
+    if (DB.gifts.some(x => x.giver_id === id && !x.deleted)) throw new Error("This giver still has gifts recorded. Delete those gifts first.");
+    const rec = DB.givers.find(x => x.id === id); if (!rec) return;
+    rec.deleted = true; rec.updated_at = nowISO(); await commit();
+  },
+  async saveGift(id, data) {
+    const g = validateGift(data), t = nowISO();
+    if (id) {
+      const rec = DB.gifts.find(x => x.id === id && !x.deleted);
+      if (!rec) throw new Error("That gift no longer exists.");
+      if (!g.entered_by) delete g.entered_by;
+      Object.assign(rec, g, {updated_at: t});
+    } else {
+      id = uuid(); DB.gifts.push({id, ...g, created_at: t, updated_at: t});
+    }
+    await commit(); return id;
+  },
+  async deleteGift(id) {
+    const rec = DB.gifts.find(x => x.id === id); if (!rec) return;
+    rec.deleted = true; rec.updated_at = nowISO(); await commit();
+  },
+  async markThanks(id, sent, date) {
+    const rec = DB.gifts.find(x => x.id === id && !x.deleted); if (!rec) throw new Error("That gift no longer exists.");
+    const d = parseDate(date || todayISO(), "Thank-you date");
+    rec.thank_you_sent = sent ? 1 : 0; rec.thank_you_date = sent ? d : null; rec.updated_at = nowISO();
+    await commit();
+  }
+};
+
+/* ===================== derived views of the data ===================== */
+const giverName = g => g.last_name + (g.first_names ? ", " + g.first_names : "");
+function buildState() {
+  const givers = DB.givers.filter(g => !g.deleted), gmap = new Map(givers.map(g => [g.id, g]));
+  const gifts = DB.gifts.filter(x => !x.deleted && gmap.has(x.giver_id)).map(x => {
+    const t = x.contribution_type;
+    return {...x, giver_name: giverName(gmap.get(x.giver_id)),
+      report_category: CASH_TYPES.includes(t) ? "Actual Cash" : t === "Gift Card" ? "Gift Card" : "Physical Gift (Estimated)",
+      cash_cents: CASH_TYPES.includes(t) ? x.amount_cents : null,
+      card_cents: t === "Gift Card" ? x.amount_cents : null,
+      est_cents: t === "Physical Gift" ? (x.est_value_cents ?? null) : null};
+  }).sort((a, b) => b.date_received.localeCompare(a.date_received) || (b.created_at || "").localeCompare(a.created_at || ""));
+  const sum = (list, k) => list.reduce((s, g) => s + (g[k] || 0), 0);
+  const gv = givers.map(g => {
+    const mine = gifts.filter(x => x.giver_id === g.id);
+    return {...g, display_name: giverName(g), gift_count: mine.length, cash_cents: sum(mine, "cash_cents"),
+            card_cents: sum(mine, "card_cents"), est_cents: sum(mine, "est_cents")};
+  }).sort((a, b) => byName(a.last_name, b.last_name) || byName(a.first_names, b.first_names));
+  return {settings: DB.settings, givers: gv, gifts, lists: {types: TYPES, events: EVENTS, sides: SIDES}, meta: DB.meta};
+}
+function getReport() {
+  const st = App.state, gifts = st.gifts, cnt = f => gifts.filter(f).length;
+  const sumWhere = (f, k) => gifts.filter(f).reduce((s, g) => s + (g[k] || 0), 0);
+  const isT = t => g => g.contribution_type === t;
+  const s = {
+    n_gifts: gifts.length,
+    n_actual_cash: cnt(g => g.cash_cents != null), actual_cash_cents: sumWhere(() => true, "cash_cents"),
+    n_cash: cnt(isT("Cash")), cash_cents: sumWhere(isT("Cash"), "amount_cents"),
+    n_check: cnt(isT("Check")), check_cents: sumWhere(isT("Check"), "amount_cents"),
+    n_epay: cnt(isT("Electronic Payment")), epay_cents: sumWhere(isT("Electronic Payment"), "amount_cents"),
+    n_cards: cnt(g => g.card_cents != null), card_cents: sumWhere(() => true, "card_cents"),
+    n_physical: cnt(isT("Physical Gift")), est_cents: sumWhere(() => true, "est_cents"),
+    n_physical_no_estimate: cnt(g => g.contribution_type === "Physical Gift" && g.est_cents == null),
+    n_thanked: cnt(g => g.thank_you_sent), n_givers_with_gifts: new Set(gifts.map(g => g.giver_id)).size
+  };
+  s.n_pending_thanks = s.n_gifts - s.n_thanked;
+  const detail = gifts.slice().sort((a, b) => byName(a.giver_name, b.giver_name) || a.date_received.localeCompare(b.date_received))
+    .map(g => ({...g, details: details(g)}));
+  const map = new Map();
+  for (const r of detail) {
+    if (!map.has(r.giver_id)) map.set(r.giver_id, {giver_id: r.giver_id, giver_name: r.giver_name, items: 0, cash_cents: 0,
+                                                    card_cents: 0, est_cents: 0, thanked: 0, what: []});
+    const g = map.get(r.giver_id);
+    g.items++; g.cash_cents += r.cash_cents || 0; g.card_cents += r.card_cents || 0; g.est_cents += r.est_cents || 0;
+    g.thanked += r.thank_you_sent ? 1 : 0; g.what.push(r.details);
+  }
+  const by_giver = [...map.values()].map(g => ({...g, what: g.what.join("; ")}));
+  const generated = new Date().toLocaleString("en-US", {month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+  return {settings: st.settings, summary: s, by_giver, detail, generated};
+}
+
+/* ===================== files: share / download ===================== */
+function stamp() { const d = new Date(); return todayISO() + " " + String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0"); }
+function blobToBase64(blob) {
+  return new Promise((res, rej) => { const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = () => rej(r.error); r.readAsDataURL(blob); });
+}
+async function deliverFile(blob, filename) {
+  if (ANDROID) { AndroidBridge.saveFile(await blobToBase64(blob), filename, blob.type || "application/octet-stream"); return true; }
+  const file = new File([blob], filename, {type: blob.type});
+  if (isTouch() && navigator.canShare && navigator.canShare({files: [file]})) {
+    try { await navigator.share({files: [file], title: filename}); return true; }
+    catch (e) { if (e && e.name === "AbortError") return false; }
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  return true;
+}
+
+/* ---- Excel (.xlsx) writer: a tiny ZIP + SpreadsheetML generator, no internet needed ---- */
+const CRC_TABLE = (() => { const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t; })();
+function crc32(bytes) { let c = 0xFFFFFFFF; for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files, mime) {
+  const enc = new TextEncoder(), parts = [], central = []; let offset = 0;
+  const d = new Date();
+  const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | Math.floor(d.getSeconds() / 2);
+  const dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  for (const f of files) {
+    const name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint16(10, dosTime, true); h.setUint16(12, dosDate, true); h.setUint32(14, crc, true);
+    h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+    parts.push(new Uint8Array(h.buffer), name, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint16(10, 0, true); c.setUint16(12, dosTime, true); c.setUint16(14, dosDate, true); c.setUint32(16, crc, true);
+    c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true);
+    c.setUint16(30, 0, true); c.setUint16(32, 0, true); c.setUint16(34, 0, true); c.setUint16(36, 0, true);
+    c.setUint32(38, 0, true); c.setUint32(42, offset, true);
+    central.push(new Uint8Array(c.buffer), name);
+    offset += 30 + name.length + data.length;
+  }
+  const cdSize = central.reduce((s, a) => s + a.length, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(4, 0, true); e.setUint16(6, 0, true); e.setUint16(8, files.length, true);
+  e.setUint16(10, files.length, true); e.setUint32(12, cdSize, true); e.setUint32(16, offset, true); e.setUint16(20, 0, true);
+  return new Blob([...parts, ...central, new Uint8Array(e.buffer)], {type: mime});
+}
+const ST = {NORMAL: 0, HEADER: 1, MONEY: 2, TITLE: 3, BOLD: 4, BOLD_MONEY: 5, WRAP: 6, ITALIC: 7, HEADER_R: 8};
+const XLSX_STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0.00"/></numFmts>
+<fonts count="4"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="16"/><name val="Calibri"/><family val="2"/></font><font><i/><sz val="10"/><color rgb="FF555555"/><name val="Calibri"/><family val="2"/></font></fonts>
+<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E9EE"/><bgColor indexed="64"/></patternFill></fill></fills>
+<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left/><right/><top/><bottom style="thin"><color rgb="FF8A8F99"/></bottom><diagonal/></border></borders>
+<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+<cellXfs count="9">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"><alignment vertical="top"/></xf>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment vertical="center" wrapText="1"/></xf>
+<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"><alignment vertical="top"/></xf>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment vertical="top"/></xf>
+<xf numFmtId="164" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"><alignment vertical="top"/></xf>
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>
+<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center" wrapText="1"/></xf>
+</cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+const xmlEsc = s => String(s).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+function colName(i) { let n = ""; i += 1; while (i) { const r = (i - 1) % 26; n = String.fromCharCode(65 + r) + n; i = Math.floor((i - 1) / 26); } return n; }
+function sheetXml(sh) {
+  const o = ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><sheetViews><sheetView workbookViewId="0">'];
+  if (sh.freeze) o.push(`<pane ySplit="${sh.freeze}" topLeftCell="A${sh.freeze + 1}" activePane="bottomLeft" state="frozen"/>`);
+  o.push("</sheetView></sheetViews>");
+  if (sh.widths) o.push("<cols>" + sh.widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("") + "</cols>");
+  o.push("<sheetData>");
+  sh.rows.forEach((row, ri) => {
+    o.push(`<row r="${ri + 1}">`);
+    row.forEach((cell, ci) => {
+      if (cell === null || cell === undefined) return;
+      const [v, s] = Array.isArray(cell) ? [cell[0], cell[1] ?? 0] : [cell, 0];
+      const ref = colName(ci) + (ri + 1);
+      if (v === null || v === undefined || v === "") { if (s) o.push(`<c r="${ref}" s="${s}"/>`); return; }
+      if (typeof v === "number") o.push(`<c r="${ref}" s="${s}"><v>${v}</v></c>`);
+      else o.push(`<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`);
+    });
+    o.push("</row>");
+  });
+  o.push('</sheetData><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>');
+  o.push(`<pageSetup orientation="${sh.landscape ? "landscape" : "portrait"}" fitToWidth="1" fitToHeight="0"/>`);
+  o.push('<headerFooter><oddFooter>&amp;L&amp;A&amp;RPage &amp;P of &amp;N</oddFooter></headerFooter></worksheet>');
+  return o.join("");
+}
+function buildXlsx(sheets) {
+  const files = [], rels = [], entries = [], names = [];
+  sheets.forEach((sh, i) => {
+    const n = i + 1, safe = sh.name.replace(/[\[\]:*?\/\\]/g, "").slice(0, 31);
+    entries.push(`<sheet name="${xmlEsc(safe)}" sheetId="${n}" r:id="rId${n}"/>`);
+    rels.push(`<Relationship Id="rId${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${n}.xml"/>`);
+    if (sh.printTitles) names.push(`<definedName name="_xlnm.Print_Titles" localSheetId="${i}">'${xmlEsc(safe)}'!$1:$${sh.printTitles}</definedName>`);
+    files.push({name: `xl/worksheets/sheet${n}.xml`, data: sheetXml(sh)});
+  });
+  rels.push(`<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>`);
+  const head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  files.unshift(
+    {name: "[Content_Types].xml", data: head + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+      sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("") + "</Types>"},
+    {name: "_rels/.rels", data: head + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+    {name: "xl/workbook.xml", data: head + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + entries.join("") + "</sheets>" + (names.length ? "<definedNames>" + names.join("") + "</definedNames>" : "") + "</workbook>"},
+    {name: "xl/_rels/workbook.xml.rels", data: head + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + rels.join("") + "</Relationships>"},
+    {name: "xl/styles.xml", data: XLSX_STYLES});
+  return zipStore(files, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+}
+const dollars = c => (c === null || c === undefined) ? null : Math.round(c) / 100;
+function reportTitle(st) { const c = (st.couple || "").trim(); return c ? "Gifts Received — " + c : "Wedding Gifts Received"; }
+function reportXlsx() {
+  const rep = getReport(), s = rep.summary, st = rep.settings;
+  const sub = [st.wedding_date ? "Wedding date: " + mdy(st.wedding_date) : "", "Prepared: " + rep.generated].filter(Boolean).join(" · ");
+  const summary = [
+    [[reportTitle(st), ST.TITLE]], [[sub, ST.ITALIC]], [],
+    [["Category", ST.HEADER], ["Items", ST.HEADER_R], ["Total", ST.HEADER_R]],
+    [["Actual cash received", ST.BOLD], [s.n_actual_cash, ST.BOLD], [dollars(s.actual_cash_cents), ST.BOLD_MONEY]],
+    ["      Cash", s.n_cash, [dollars(s.cash_cents), ST.MONEY]],
+    ["      Checks", s.n_check, [dollars(s.check_cents), ST.MONEY]],
+    ["      Electronic payments", s.n_epay, [dollars(s.epay_cents), ST.MONEY]],
+    [["Gift cards (face value)", ST.BOLD], [s.n_cards, ST.BOLD], [dollars(s.card_cents), ST.BOLD_MONEY]],
+    [["Physical gifts (estimated value)", ST.BOLD], [s.n_physical, ST.BOLD], [dollars(s.est_cents), ST.BOLD_MONEY]],
+    ["      Physical gifts with no estimate", s.n_physical_no_estimate], [],
+    ["Number of givers", s.n_givers_with_gifts], ["Total items received", s.n_gifts],
+    ["Thank-you notes sent", s.n_thanked], ["Thank-you notes still to send", s.n_pending_thanks], [],
+    [["Actual cash, gift cards and estimated gift values are totalled separately and are never added together. Estimated values are approximate.", ST.ITALIC]]
+  ];
+  const numH = ["Items", "Actual Cash", "Gift Cards", "Gift Card", "Est. Gift Value"];
+  const hdr = list => list.map(h => [h, numH.includes(h) ? ST.HEADER_R : ST.HEADER]);
+  const byGiver = [[[reportTitle(st) + " — By Giver", ST.TITLE]], [],
+    hdr(["Giver", "Items", "Actual Cash", "Gift Cards", "Est. Gift Value", "What They Gave", "Thank-Yous Sent"]),
+    ...rep.by_giver.map(g => [g.giver_name, g.items, [g.cash_cents ? dollars(g.cash_cents) : null, ST.MONEY],
+      [g.card_cents ? dollars(g.card_cents) : null, ST.MONEY], [g.est_cents ? dollars(g.est_cents) : null, ST.MONEY],
+      [g.what, ST.WRAP], `${g.thanked} of ${g.items}`]),
+    [["Totals", ST.BOLD], [s.n_gifts, ST.BOLD], [dollars(s.actual_cash_cents), ST.BOLD_MONEY],
+     [dollars(s.card_cents), ST.BOLD_MONEY], [dollars(s.est_cents), ST.BOLD_MONEY]]];
+  const detail = [[[reportTitle(st) + " — Gift Detail", ST.TITLE]], [],
+    hdr(["Giver", "Date Received", "Event", "Type", "Actual Cash", "Gift Card", "Est. Gift Value", "Gift / Card Details", "Thank-You Sent", "Notes"]),
+    ...rep.detail.map(r => [r.giver_name, mdy(r.date_received), r.event, r.contribution_type,
+      [dollars(r.cash_cents), ST.MONEY], [dollars(r.card_cents), ST.MONEY], [dollars(r.est_cents), ST.MONEY],
+      [r.details, ST.WRAP], r.thank_you_sent ? mdy(r.thank_you_date) : "Not yet", [r.notes, ST.WRAP]]),
+    [["Totals", ST.BOLD], null, null, null, [dollars(s.actual_cash_cents), ST.BOLD_MONEY],
+     [dollars(s.card_cents), ST.BOLD_MONEY], [dollars(s.est_cents), ST.BOLD_MONEY]]];
+  const contacts = [hdr(["Last Name", "First Names", "Side / Relationship", "Phone", "Email", "Street Address", "City", "State", "ZIP", "Notes"]),
+    ...App.state.givers.map(g => [g.last_name, g.first_names, g.side, g.phone, g.email, g.street, g.city, g.state, g.zip, [g.notes, ST.WRAP]])];
+  return buildXlsx([
+    {name: "Summary", rows: summary, widths: [40, 10, 16]},
+    {name: "By Giver", rows: byGiver, widths: [30, 8, 14, 14, 15, 50, 15], freeze: 3, printTitles: 3, landscape: true},
+    {name: "Gift Detail", rows: detail, widths: [28, 14, 16, 18, 13, 13, 15, 40, 15, 30], freeze: 3, printTitles: 3, landscape: true},
+    {name: "Givers (Contacts)", rows: contacts, widths: [18, 20, 18, 16, 26, 30, 16, 8, 10, 30], freeze: 1, printTitles: 1, landscape: true}
+  ]);
+}
+function csvBlob(rows) {
+  const cell = v => { v = v === null || v === undefined ? "" : String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  return new Blob(["﻿" + rows.map(r => r.map(cell).join(",")).join("\r\n")], {type: "text/csv"});
+}
+function giftsCsv() {
+  const rows = [["Giver", "Date Received", "Event", "Type", "Report Category", "Actual Cash", "Gift Card", "Est. Gift Value",
+                 "Card Retailer", "Gift Description", "Payment Reference", "Thank-You Sent", "Thank-You Date", "Notes", "Entered By"]];
+  getReport().detail.forEach(r => rows.push([r.giver_name, r.date_received, r.event, r.contribution_type, r.report_category,
+    dollars(r.cash_cents), dollars(r.card_cents), dollars(r.est_cents), r.card_retailer, r.description, r.payment_ref,
+    r.thank_you_sent ? "Yes" : "No", r.thank_you_date || "", r.notes, r.entered_by]));
+  return csvBlob(rows);
+}
+function giversCsv() {
+  const rows = [["Last Name", "First Names", "Side / Relationship", "Phone", "Email", "Street Address", "City", "State", "ZIP", "Notes"]];
+  App.state.givers.forEach(g => rows.push([g.last_name, g.first_names, g.side, g.phone, g.email, g.street, g.city, g.state, g.zip, g.notes]));
+  return csvBlob(rows);
+}
+
+/* ---- backup / restore / merge between phones ---- */
+async function saveBackup() {
+  const data = JSON.stringify({...DB, exported_at: nowISO()}, null, 1);
+  const ok = await deliverFile(new Blob([data], {type: "application/json"}), `Wedding Gifts Backup ${stamp()}.json`);
+  if (ok) {
+    DB.meta.last_backup = nowISO(); DB.meta.changes_since_backup = 0;
+    await Store.save(DB); App.state = buildState(); toast("Backup file created");
+    refreshCurrent();
+  }
+}
+const str = (v, n = 2000) => clean(v, n);
+function cleanGiverRec(r) {
+  if (!r || typeof r.id !== "string" || !r.id) return null;
+  return {id: r.id, last_name: str(r.last_name, 100) || "(no name)", first_names: str(r.first_names, 150), side: str(r.side, 50),
+          phone: str(r.phone, 40), email: str(r.email, 150), street: str(r.street, 200), city: str(r.city, 100), state: str(r.state, 50),
+          zip: str(r.zip, 20), notes: str(r.notes), created_at: str(r.created_at, 40), updated_at: str(r.updated_at, 40),
+          ...(r.deleted ? {deleted: true} : {})};
+}
+function cleanGiftRec(r) {
+  if (!r || typeof r.id !== "string" || !r.id || typeof r.giver_id !== "string" || !TYPES.includes(r.contribution_type)) return null;
+  const cents = v => (typeof v === "number" && isFinite(v) && v >= 0) ? Math.round(v) : null;
+  const date = v => /^\d{4}-\d{2}-\d{2}$/.test(v || "") ? v : null;
+  return {id: r.id, giver_id: r.giver_id, date_received: date(r.date_received) || todayISO(), event: str(r.event, 50),
+          contribution_type: r.contribution_type, amount_cents: cents(r.amount_cents), card_retailer: str(r.card_retailer, 100),
+          description: str(r.description), est_value_cents: cents(r.est_value_cents), payment_ref: str(r.payment_ref, 100),
+          notes: str(r.notes), thank_you_sent: r.thank_you_sent ? 1 : 0, thank_you_date: r.thank_you_sent ? date(r.thank_you_date) || todayISO() : null,
+          entered_by: str(r.entered_by, 60), created_at: str(r.created_at, 40), updated_at: str(r.updated_at, 40),
+          ...(r.deleted ? {deleted: true} : {})};
+}
+async function restoreFrom(text) {
+  let inc;
+  try { inc = JSON.parse(text); } catch (e) { throw new Error("That file isn't a Wedding Gift Tracker backup."); }
+  if (!inc || inc.format !== "wedding-gift-tracker" || !Array.isArray(inc.givers) || !Array.isArray(inc.gifts))
+    throw new Error("That file isn't a Wedding Gift Tracker backup.");
+  const stats = {added: 0, updated: 0};
+  const merge = (kind, cleaner) => {
+    const map = new Map(DB[kind].map(r => [r.id, r]));
+    for (const raw of inc[kind]) {
+      const r = cleaner(raw); if (!r) continue;
+      const cur = map.get(r.id);
+      if (!cur) { map.set(r.id, r); if (!r.deleted) stats.added++; }
+      else if ((r.updated_at || "") > (cur.updated_at || "")) { map.set(r.id, r); stats.updated++; }
+    }
+    DB[kind] = [...map.values()];
+  };
+  merge("givers", cleanGiverRec); merge("gifts", cleanGiftRec);
+  if (inc.settings && !DB.settings.couple && !DB.settings.wedding_date)
+    DB.settings = {couple: str(inc.settings.couple, 120), wedding_date: /^\d{4}-\d{2}-\d{2}$/.test(inc.settings.wedding_date || "") ? inc.settings.wedding_date : ""};
+  await commit();
+  return stats;
+}
+$("#restoreFile").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  try {
+    const st = await restoreFrom(await f.text());
+    alert(`Backup merged.\n${st.added} new record(s) added, ${st.updated} record(s) updated with newer changes.\nRecords that exist only on this phone were kept.`);
+    refreshCurrent();
+  } catch (err) { alert(err.message); }
+});
+
+/* ---- standalone printable report file ---- */
+const REPORT_FILE_CSS = `body{font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#1f2a3a;margin:24px;background:#fff}
+h1{font-family:Georgia,serif;font-weight:normal;font-size:26px;margin:0 0 2px}h2{font-family:Georgia,serif;font-weight:normal;font-size:20px;margin:26px 0 10px;border-bottom:1px solid #ddd;padding-bottom:6px}
+.muted{color:#6b7280;font-size:13px}.note{font-size:12.5px;color:#6b7280;font-style:italic}
+.sumcards{display:flex;gap:10px;margin-bottom:10px}.sumcard{flex:1;border:1px solid #ddd;border-top:4px solid;border-radius:10px;padding:8px 10px}
+.sumcard.cash{border-top-color:#2f6f4f}.sumcard.card{border-top-color:#2f5d8a}.sumcard.est{border-top-color:#8a5a2b}.sumcard .v{font-size:19px;font-weight:700}.sumcard .l{font-size:12px;color:#6b7280}
+table{border-collapse:collapse;width:100%;font-size:12.5px}th{text-align:left;background:#e7e9ee;font-size:11px;text-transform:uppercase;letter-spacing:.3px;padding:6px}
+td{padding:5px 6px;border-top:1px solid #e5e5e5;vertical-align:top}.num{text-align:right;white-space:nowrap}th.num{text-align:right}
+tr.total td{font-weight:700;border-top:2px solid #1f2a3a}tr.group td{font-weight:700}tr.sub td:first-child{padding-left:22px}
+.zebra tbody tr:nth-child(even) td{background:#fafaf8}.tablewrap{overflow-x:auto}
+@media print{@page{size:landscape;margin:.5in}body{margin:0}.pb{break-before:page}tr{break-inside:avoid}thead{display:table-header-group}
+th,.sumcard{-webkit-print-color-adjust:exact;print-color-adjust:exact}}`;
+function reportMarkup(rep) {
+  const s = rep.summary, st = rep.settings, m = c => c ? money(c) : "";
+  const sub = [st.wedding_date ? "Wedding date: " + fmtDate(st.wedding_date) : "", "Prepared " + esc(rep.generated)].filter(Boolean).join(" · ");
+  const pl = (n, one, many) => n + " " + (n === 1 ? one : many);
+  return `<div class="rpt-head"><h1>${esc(reportTitle(st))}</h1><div class="muted">${sub}</div></div>
+    <h2>Summary</h2>
+    <div class="sumcards">
+      <div class="sumcard cash"><div class="l">Actual cash received</div><div class="v">${money(s.actual_cash_cents)}</div><div class="l">${pl(s.n_actual_cash, "item", "items")}</div></div>
+      <div class="sumcard card"><div class="l">Gift cards (face value)</div><div class="v">${money(s.card_cents)}</div><div class="l">${pl(s.n_cards, "card", "cards")}</div></div>
+      <div class="sumcard est"><div class="l">Physical gifts (estimated)</div><div class="v">${money(s.est_cents)}</div><div class="l">${pl(s.n_physical, "gift", "gifts")}${s.n_physical_no_estimate ? ", " + s.n_physical_no_estimate + " without an estimate" : ""}</div></div>
+    </div>
+    <div class="tablewrap"><table class="rt">
+      <thead><tr><th>Category</th><th class="num">Items</th><th class="num">Total</th></tr></thead>
+      <tbody>
+        <tr class="group"><td>Actual cash received</td><td class="num">${s.n_actual_cash}</td><td class="num">${money(s.actual_cash_cents)}</td></tr>
+        <tr class="sub"><td>Cash</td><td class="num">${s.n_cash}</td><td class="num">${money(s.cash_cents)}</td></tr>
+        <tr class="sub"><td>Checks</td><td class="num">${s.n_check}</td><td class="num">${money(s.check_cents)}</td></tr>
+        <tr class="sub"><td>Electronic payments</td><td class="num">${s.n_epay}</td><td class="num">${money(s.epay_cents)}</td></tr>
+        <tr class="group"><td>Gift cards (face value)</td><td class="num">${s.n_cards}</td><td class="num">${money(s.card_cents)}</td></tr>
+        <tr class="group"><td>Physical gifts (estimated value)</td><td class="num">${s.n_physical}</td><td class="num">${money(s.est_cents)}</td></tr>
+        <tr><td>Givers</td><td class="num">${s.n_givers_with_gifts}</td><td></td></tr>
+        <tr><td>Thank-you notes sent / still to send</td><td class="num">${s.n_thanked} / ${s.n_pending_thanks}</td><td></td></tr>
+      </tbody></table></div>
+    <p class="note">Actual cash, gift cards and estimated gift values are totalled separately and never added together. Estimated values are approximate.</p>
+    <h2 class="pb">By giver</h2>
+    ${rep.by_giver.length ? `<div class="tablewrap"><table class="rt zebra">
+      <thead><tr><th>Giver</th><th class="num">Items</th><th class="num">Actual cash</th><th class="num">Gift cards</th><th class="num">Est. gift value</th><th>What they gave</th><th>Thank-yous</th></tr></thead>
+      <tbody>${rep.by_giver.map(g => `<tr><td>${esc(g.giver_name)}</td><td class="num">${g.items}</td>
+        <td class="num">${m(g.cash_cents)}</td><td class="num">${m(g.card_cents)}</td><td class="num">${m(g.est_cents)}</td>
+        <td class="wrap">${esc(g.what)}</td><td>${g.thanked} of ${g.items}</td></tr>`).join("")}
+        <tr class="total"><td>Totals</td><td class="num">${s.n_gifts}</td><td class="num">${money(s.actual_cash_cents)}</td>
+          <td class="num">${money(s.card_cents)}</td><td class="num">${money(s.est_cents)}</td><td></td><td></td></tr>
+      </tbody></table></div>` : `<div class="empty">No gifts yet.</div>`}
+    <h2 class="pb">Gift detail</h2>
+    ${rep.detail.length ? `<div class="tablewrap"><table class="rt zebra">
+      <thead><tr><th>Giver</th><th>Received</th><th>Type</th><th class="num">Actual cash</th><th class="num">Gift card</th><th class="num">Est. value</th><th>Gift / card details</th><th>Thank-you</th></tr></thead>
+      <tbody>${rep.detail.map(r => `<tr><td>${esc(r.giver_name)}</td><td style="white-space:nowrap">${fmtDate(r.date_received)}</td>
+        <td>${esc(r.contribution_type)}</td><td class="num">${money(r.cash_cents)}</td><td class="num">${money(r.card_cents)}</td>
+        <td class="num">${r.contribution_type === "Physical Gift" && r.est_cents == null ? "—" : money(r.est_cents)}</td>
+        <td class="wrap">${esc(r.details)}</td><td style="white-space:nowrap">${r.thank_you_sent ? "Sent " + fmtDate(r.thank_you_date) : "Not yet"}</td></tr>`).join("")}
+        <tr class="total"><td>Totals</td><td></td><td></td><td class="num">${money(s.actual_cash_cents)}</td>
+          <td class="num">${money(s.card_cents)}</td><td class="num">${money(s.est_cents)}</td><td></td><td></td></tr>
+      </tbody></table></div>` : `<div class="empty">No gifts yet.</div>`}`;
+}
+function reportFileHtml() {
+  const rep = getReport();
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(reportTitle(rep.settings))}</title><style>${REPORT_FILE_CSS}</style></head><body>${reportMarkup(rep)}</body></html>`;
+}
+function reportFileBlob() { return new Blob([reportFileHtml()], {type: "text/html"}); }
+function printReport() {
+  if (ANDROID) AndroidBridge.print(reportFileHtml(), "Wedding Gifts Report " + todayISO());
+  else window.print();
+}
+
+/* ===================== app state & router ===================== */
+const App = {
+  state: null,
+  filters: {q: "", giver: "", type: "", ty: "", from: "", to: "", sort: "new"},
+  showMore: false, giverQ: "", thanksTab: "pending", returnTo: "#/gifts", formDirty: false,
+  me: localStorage.getItem("gt_me") || ""
+};
+function giverById(id) { return App.state.givers.find(g => g.id === id); }
+function updateChrome() {
+  const st = App.state, couple = (st.settings.couple || "").trim();
+  $("#brand").textContent = couple ? "Wedding Gifts · " + couple : "Wedding Gifts";
+  const pending = st.gifts.filter(g => !g.thank_you_sent).length, b = $("#tyBadge");
+  b.textContent = pending; b.classList.toggle("hidden", pending === 0);
+}
+function route() { return (location.hash.replace(/^#\/?/, "") || "gifts").split("/"); }
+function router() {
+  const parts = route();
+  App.formDirty = false;
+  document.body.classList.toggle("wide", parts[0] === "report");
+  $$("#tabbar a").forEach(a => a.classList.toggle("on", a.dataset.tab === parts[0] ||
+    (a.dataset.tab === "givers" && parts[0] === "giver") || (a.dataset.tab === "gifts" && parts[0] === "gift")));
+  if (["gifts", "givers", "thanks"].includes(parts[0]) || (parts[0] === "giver" && parts.length === 2 && parts[1] !== "new"))
+    App.returnTo = location.hash || "#/gifts";
+  window.scrollTo(0, 0);
+  switch (parts[0]) {
+    case "gifts": return viewGifts();
+    case "add": return viewGiftForm(null, parts[1] === "giver" ? parts[2] : null);
+    case "gift": return viewGiftForm(parts[1]);
+    case "givers": return viewGivers();
+    case "giver":
+      if (parts[1] === "new") return viewGiverPage(null);
+      if (parts[2] === "edit") return viewGiverPage(parts[1]);
+      return viewGiverDetail(parts[1]);
+    case "thanks": return viewThanks();
+    case "report": return viewReport();
+    case "settings": return viewSettings();
+    default: location.hash = "#/gifts";
+  }
+}
+function refreshCurrent() {
+  const r = route()[0];
+  if (["gifts", "givers", "thanks", "report", "settings"].includes(r)) router();
+}
+window.addEventListener("hashchange", router);
+$("#settingsBtn").addEventListener("click", () => { location.hash = "#/settings"; });
+
+/* ===================== gifts list ===================== */
+function giftCard(g) {
+  const cls = catClass(g);
+  return `<a class="card" href="#/gift/${esc(g.id)}">
+    <div class="row1"><span class="name">${esc(g.giver_name)}</span><span class="amt c-${cls}">${esc(giftValueText(g))}</span></div>
+    <div class="meta"><span class="chip ${cls}">${esc(g.contribution_type)}</span>
+      <span class="muted">${fmtDate(g.date_received)}${g.event ? " · " + esc(g.event) : ""}</span></div>
+    ${g.contribution_type === "Cash" ? "" : `<div class="what">${esc(details(g))}</div>`}
+    <div class="ty ${g.thank_you_sent ? "sent" : "pending"}">${g.thank_you_sent ? "✓ Thank-you sent " + fmtDate(g.thank_you_date) : "Thank-you not sent yet"}</div>
+  </a>`;
+}
+function totalsStrip(list) {
+  const sum = k => list.reduce((s, g) => s + (g[k] || 0), 0);
+  return `<div class="totals">
+    <div class="tot cash"><b>${money(sum("cash_cents"))}</b><span>Actual cash</span></div>
+    <div class="tot card"><b>${money(sum("card_cents"))}</b><span>Gift cards</span></div>
+    <div class="tot est"><b>${money(sum("est_cents"))}</b><span>Est. gift value</span></div></div>`;
+}
+function filteredGifts() {
+  const f = App.filters, q = f.q.trim().toLowerCase();
+  const list = App.state.gifts.filter(g => {
+    if (f.giver && g.giver_id !== f.giver) return false;
+    if (f.type && g.contribution_type !== f.type) return false;
+    if (f.ty === "pending" && g.thank_you_sent) return false;
+    if (f.ty === "sent" && !g.thank_you_sent) return false;
+    if (f.from && g.date_received < f.from) return false;
+    if (f.to && g.date_received > f.to) return false;
+    if (q) {
+      const hay = [g.giver_name, g.description, g.card_retailer, g.notes, g.payment_ref, g.event, g.contribution_type].join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const val = g => (g.cash_cents || 0) + (g.card_cents || 0) + (g.est_cents || 0);
+  const sorts = {
+    new: (a, b) => b.date_received.localeCompare(a.date_received) || (b.created_at || "").localeCompare(a.created_at || ""),
+    old: (a, b) => a.date_received.localeCompare(b.date_received) || (a.created_at || "").localeCompare(b.created_at || ""),
+    name: (a, b) => byName(a.giver_name, b.giver_name) || a.date_received.localeCompare(b.date_received),
+    value: (a, b) => val(b) - val(a)
+  };
+  return list.sort(sorts[f.sort] || sorts.new);
+}
+function backupNotice() {
+  const m = App.state.meta || {}, n = m.changes_since_backup || 0;
+  if (!App.state.gifts.length || n === 0) return "";
+  const last = m.last_backup ? new Date(m.last_backup) : null;
+  const days = last ? (Date.now() - last.getTime()) / 86400000 : Infinity;
+  if (n < 10 && days < 3) return "";
+  return `<div class="notice"><b>Back up your gift records</b>${n} change${n === 1 ? "" : "s"} since ${last ? "your last backup on " + last.toLocaleDateString() : "you started"}.
+    Your records live only on this phone, so save a backup file regularly.
+    <div><button class="btn small accent" type="button" data-backup>Save backup now</button></div></div>`;
+}
+function installNotice() {
+  if (ANDROID || isStandalone() || !isTouch()) return "";
+  return `<div class="notice"><b>Install this app first</b>${isIOS()
+    ? "Tap the Share button, then <b>Add to Home Screen</b>. Always open it from that icon; on iPhone the home-screen app keeps its own records, separate from Safari."
+    : "Open the browser menu (⋮) and tap <b>Add to Home screen</b> or <b>Install app</b>. Then always open it from that icon."}</div>`;
+}
+function viewGifts() {
+  const f = App.filters, st = App.state;
+  const opt = (v, label, cur) => `<option value="${esc(v)}" ${String(cur) === String(v) ? "selected" : ""}>${esc(label)}</option>`;
+  view(`${installNotice()}${backupNotice()}<h1>Gifts</h1>
+    <div class="filters">
+      <input id="fq" type="search" placeholder="Search name, gift, notes…" value="${esc(f.q)}" autocomplete="off">
+      <div class="two">
+        <select id="ftype">${opt("", "All types", f.type)}${st.lists.types.map(t => opt(t, t, f.type)).join("")}</select>
+        <select id="fty">${opt("", "Any thank-you status", f.ty)}${opt("pending", "Thank-you NOT sent", f.ty)}${opt("sent", "Thank-you sent", f.ty)}</select>
+      </div>
+      <button class="more" id="moreBtn" type="button">${App.showMore ? "Fewer filters ▴" : "More filters (giver, dates, sort) ▾"}</button>
+      <div id="moreBox" class="${App.showMore ? "" : "hidden"}" style="display:grid;gap:8px">
+        <select id="fgiver">${opt("", "All givers", f.giver)}${st.givers.map(g => opt(g.id, g.display_name, f.giver)).join("")}</select>
+        <div class="two">
+          <div><label class="muted" for="ffrom">Received from</label><input id="ffrom" type="date" value="${esc(f.from)}"></div>
+          <div><label class="muted" for="fto">Received to</label><input id="fto" type="date" value="${esc(f.to)}"></div>
+        </div>
+        <select id="fsort">${opt("new", "Sort: newest first", f.sort)}${opt("old", "Sort: oldest first", f.sort)}${opt("name", "Sort: giver A–Z", f.sort)}${opt("value", "Sort: highest value", f.sort)}</select>
+        <button class="btn ghost small" id="clearBtn" type="button">Clear all filters</button>
+      </div>
+    </div>
+    <div id="giftList"></div>`);
+  const bind = (id, key, ev = "input") => $(id).addEventListener(ev, e => { App.filters[key] = e.target.value; renderGiftList(); });
+  bind("#fq", "q"); bind("#ftype", "type", "change"); bind("#fty", "ty", "change"); bind("#fgiver", "giver", "change");
+  bind("#ffrom", "from", "change"); bind("#fto", "to", "change"); bind("#fsort", "sort", "change");
+  $("#moreBtn").addEventListener("click", () => { App.showMore = !App.showMore; viewGifts(); });
+  $("#clearBtn").addEventListener("click", () => { App.filters = {q: "", giver: "", type: "", ty: "", from: "", to: "", sort: "new"}; viewGifts(); });
+  const bb = $("[data-backup]"); if (bb) bb.addEventListener("click", saveBackup);
+  renderGiftList();
+}
+function renderGiftList() {
+  const box = $("#giftList"); if (!box) return;
+  if (!App.state.gifts.length) {
+    box.innerHTML = `<div class="empty">No gifts recorded yet.<br><br><a class="btn accent" href="#/add">Add the first gift</a></div>`;
+    return;
+  }
+  const list = filteredGifts();
+  box.innerHTML = totalsStrip(list) + `<div class="count">${list.length} of ${App.state.gifts.length} gifts shown</div>` +
+    (list.length ? list.map(giftCard).join("") : `<div class="empty">No gifts match these filters.</div>`);
+}
+
+/* ===================== gift form ===================== */
+function giverOptions(selected) {
+  return `<option value="">Choose a giver…</option>` + App.state.givers.map(g =>
+    `<option value="${esc(g.id)}" ${selected === g.id ? "selected" : ""}>${esc(g.display_name)}</option>`).join("");
+}
+function viewGiftForm(id, presetGiver) {
+  const st = App.state, g = id ? st.gifts.find(x => x.id === id) : null;
+  if (id && !g) { view(`<div class="empty">That gift wasn't found. It may have been deleted.</div>`); return; }
+  let last = {};
+  try { last = JSON.parse(sessionStorage.getItem("gt_last") || "{}"); } catch (e) {}
+  const d = g || {giver_id: presetGiver || "", date_received: last.date || todayISO(), event: last.event || "", contribution_type: "", thank_you_sent: 0};
+  const today = todayISO();
+  view(`<h1>${g ? "Edit gift" : "Add a gift"}</h1>
+  <form id="giftForm" class="form" novalidate autocomplete="off">
+    <label for="giverSel">From <span class="req">*</span></label>
+    <div class="inline"><select name="giver_id" id="giverSel">${giverOptions(d.giver_id)}</select>
+      <button type="button" class="btn ghost" id="newGiverBtn">+ New</button></div>
+    <div class="two">
+      <div><label for="fdate">Date received <span class="req">*</span></label>
+        <input id="fdate" type="date" name="date_received" value="${esc(d.date_received)}" max="${today}"></div>
+      <div><label for="fevent">Event</label><select id="fevent" name="event"><option value=""></option>
+        ${st.lists.events.map(e => `<option ${d.event === e ? "selected" : ""}>${esc(e)}</option>`).join("")}</select></div>
+    </div>
+    <label>Type of contribution <span class="req">*</span></label>
+    <div class="seg">${st.lists.types.map(t => `<label class="segbtn"><input type="radio" name="contribution_type" value="${esc(t)}"
+       ${d.contribution_type === t ? "checked" : ""}><span>${esc(t)}</span></label>`).join("")}</div>
+    <div data-show="money"><label for="famt" id="amountLabel">Amount <span class="req">*</span></label>
+      <input id="famt" name="amount" inputmode="decimal" placeholder="0.00" value="${esc(toInput(d.amount_cents))}"></div>
+    <div data-show="card"><label for="fret">Gift card store / brand</label>
+      <input id="fret" name="card_retailer" placeholder="e.g. Target, Visa, Amazon" value="${esc(d.card_retailer)}"></div>
+    <div data-show="physical">
+      <label for="fdesc">Gift description <span class="req">*</span></label>
+      <textarea id="fdesc" name="description" rows="2" placeholder="e.g. KitchenAid stand mixer, red">${esc(d.description)}</textarea>
+      <label for="fest">Estimated value <span class="muted">(optional)</span></label>
+      <input id="fest" name="est_value" inputmode="decimal" placeholder="0.00" value="${esc(toInput(d.est_value_cents))}">
+    </div>
+    <div data-show="ref"><label for="fref" id="refLabel">Check number</label>
+      <input id="fref" name="payment_ref" value="${esc(d.payment_ref)}">
+      <p class="hint">Never record bank account or routing numbers.</p></div>
+    <label for="fnotes">Notes</label>
+    <textarea id="fnotes" name="notes" rows="2">${esc(d.notes)}</textarea>
+    <div class="tybox">
+      <label class="check"><input type="checkbox" name="thank_you_sent" ${d.thank_you_sent ? "checked" : ""}> Thank-you note sent</label>
+      <div data-show="tydate"><label for="ftyd">Date sent</label>
+        <input id="ftyd" type="date" name="thank_you_date" value="${esc(d.thank_you_date || today)}" max="${today}"></div>
+    </div>
+    <div id="formErr" class="formerr hidden"></div>
+    <div class="actions">
+      ${g ? `<button class="btn" type="submit" data-mode="save">Save changes</button>
+             <a class="btn ghost" href="${esc(App.returnTo)}">Cancel</a>
+             <button class="btn danger" type="button" id="delGift">Delete gift</button>`
+          : `<button class="btn accent" type="submit" data-mode="another">Save &amp; add another</button>
+             <button class="btn" type="submit" data-mode="save">Save</button>`}
+    </div>
+  </form>`);
+  const form = $("#giftForm");
+  const vis = () => {
+    const t = form.contribution_type.value;
+    const show = (k, on) => $$(`[data-show="${k}"]`, form).forEach(el => el.classList.toggle("hidden", !on));
+    show("money", MONEY_TYPES.includes(t)); show("card", t === "Gift Card");
+    show("physical", t === "Physical Gift"); show("ref", t === "Check" || t === "Electronic Payment");
+    show("tydate", form.thank_you_sent.checked);
+    $("#amountLabel").innerHTML = (t === "Gift Card" ? "Gift card amount" : t ? t + " amount" : "Amount") + ' <span class="req">*</span>';
+    $("#refLabel").textContent = t === "Check" ? "Check number" : "Payment app / confirmation (e.g. Zelle, Venmo)";
+  };
+  form.addEventListener("change", vis);
+  form.addEventListener("input", () => { App.formDirty = true; });
+  vis();
+  $("#newGiverBtn").addEventListener("click", () => openGiverModal(newId => { $("#giverSel").innerHTML = giverOptions(newId); toast("Giver added"); }));
+  if (g) $("#delGift").addEventListener("click", async () => {
+    if (!confirm(`Delete this ${g.contribution_type.toLowerCase()} from ${g.giver_name}? This can't be undone.`)) return;
+    try { await Local.deleteGift(g.id); toast("Gift deleted"); location.hash = App.returnTo; } catch (err) { showErr(err.message); }
+  });
+  let mode = "save";
+  $$('button[type="submit"]', form).forEach(b => b.addEventListener("click", () => { mode = b.dataset.mode; }));
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const body = Object.fromEntries(new FormData(form).entries());
+    body.thank_you_sent = form.thank_you_sent.checked;
+    if (!body.thank_you_sent) body.thank_you_date = "";
+    body.entered_by = App.me;
+    const btns = $$("button", form); btns.forEach(b => b.disabled = true);
+    try {
+      await Local.saveGift(g ? g.id : null, body);
+      if (!g && mode === "another") sessionStorage.setItem("gt_last", JSON.stringify({date: body.date_received, event: body.event}));
+      else if (!g) sessionStorage.removeItem("gt_last");
+      App.formDirty = false;
+      if (!g && mode === "another") { viewGiftForm(null, null); window.scrollTo(0, 0); toast("Saved — ready for the next gift"); }
+      else { toast(g ? "Changes saved" : "Gift saved"); location.hash = g ? App.returnTo : "#/gifts"; }
+    } catch (err) { showErr(err.message); btns.forEach(b => b.disabled = false); }
+  });
+}
+function showErr(msg) {
+  const fe = $("#formErr"); if (!fe) return alert(msg);
+  fe.textContent = msg; fe.classList.remove("hidden"); fe.scrollIntoView({block: "center", behavior: "smooth"});
+}
+
+/* ===================== givers ===================== */
+function giverFields(d) {
+  d = d || {};
+  return `
+    <div class="two">
+      <div><label for="glast">Last name <span class="req">*</span></label>
+        <input id="glast" name="last_name" value="${esc(d.last_name)}" autocapitalize="words" placeholder="Smith"></div>
+      <div><label for="gfirst">First name(s)</label>
+        <input id="gfirst" name="first_names" value="${esc(d.first_names)}" autocapitalize="words" placeholder="John & Mary"></div>
+    </div>
+    <label for="gside">Side / relationship</label>
+    <select id="gside" name="side"><option value=""></option>
+      ${SIDES.map(s => `<option ${d.side === s ? "selected" : ""}>${esc(s)}</option>`).join("")}</select>
+    <div class="two">
+      <div><label for="gphone">Phone</label><input id="gphone" name="phone" type="tel" value="${esc(d.phone)}"></div>
+      <div><label for="gemail">Email</label><input id="gemail" name="email" type="email" value="${esc(d.email)}" autocapitalize="off"></div>
+    </div>
+    <label for="gstreet">Street address</label><input id="gstreet" name="street" value="${esc(d.street)}">
+    <div class="three">
+      <div><label for="gcity">City</label><input id="gcity" name="city" value="${esc(d.city)}"></div>
+      <div><label for="gstate">State</label><input id="gstate" name="state" value="${esc(d.state)}" autocapitalize="characters"></div>
+      <div><label for="gzip">ZIP</label><input id="gzip" name="zip" value="${esc(d.zip)}" inputmode="numeric"></div>
+    </div>
+    <label for="gnotes">Notes</label><textarea id="gnotes" name="notes" rows="2" placeholder="e.g. Aunt on Dad's side">${esc(d.notes)}</textarea>`;
+}
+function openGiverModal(onSaved) {
+  const m = document.createElement("div");
+  m.className = "modal";
+  m.innerHTML = `<div class="sheet"><h1>New giver</h1><form class="form" novalidate autocomplete="off">${giverFields({})}
+    <div class="formerr hidden" data-err></div>
+    <div class="actions"><button class="btn" type="submit">Save giver</button><button class="btn ghost" type="button" data-cancel>Cancel</button></div>
+    </form></div>`;
+  document.body.appendChild(m);
+  const form = $("form", m), close = () => m.remove();
+  $("[data-cancel]", m).addEventListener("click", close);
+  m.addEventListener("click", e => { if (e.target === m) close(); });
+  setTimeout(() => $("#glast", m).focus(), 50);
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    try { const id = await Local.saveGiver(null, Object.fromEntries(new FormData(form).entries())); close(); onSaved(id); }
+    catch (err) { const fe = $("[data-err]", m); fe.textContent = err.message; fe.classList.remove("hidden"); }
+  });
+}
+function viewGivers() {
+  view(`<h1>Givers</h1>
+    <div class="filters"><input id="gq" type="search" placeholder="Search givers…" value="${esc(App.giverQ)}" autocomplete="off"></div>
+    <div class="actions" style="margin:0 0 12px"><a class="btn ghost small" href="#/giver/new">+ Add a giver</a></div>
+    <div id="giverList"></div>`);
+  $("#gq").addEventListener("input", e => { App.giverQ = e.target.value; renderGiverList(); });
+  renderGiverList();
+}
+function renderGiverList() {
+  const box = $("#giverList"); if (!box) return;
+  const q = App.giverQ.trim().toLowerCase();
+  if (!App.state.givers.length) { box.innerHTML = `<div class="empty">No givers yet. Add them from the gift form with <b>+ New</b>.</div>`; return; }
+  const list = App.state.givers.filter(g => !q || [g.display_name, g.side, g.city, g.email, g.phone, g.notes].join(" ").toLowerCase().includes(q));
+  box.innerHTML = `<div class="count">${list.length} of ${App.state.givers.length} givers</div>` + (list.map(g => {
+    const parts = [];
+    if (g.cash_cents) parts.push(`<span class="c-cash">${money(g.cash_cents)} cash</span>`);
+    if (g.card_cents) parts.push(`<span class="c-card">${money(g.card_cents)} gift cards</span>`);
+    if (g.est_cents) parts.push(`<span class="c-est">est. ${money(g.est_cents)} gifts</span>`);
+    return `<a class="card" href="#/giver/${esc(g.id)}">
+      <div class="row1"><span class="name">${esc(g.display_name)}</span><span class="muted">${g.gift_count} ${g.gift_count === 1 ? "item" : "items"}</span></div>
+      <div class="meta">${g.side ? `<span class="chip">${esc(g.side)}</span>` : ""}${g.city ? `<span class="muted">${esc(g.city)}</span>` : ""}</div>
+      ${parts.length ? `<div class="what" style="font-size:14px;font-weight:600">${parts.join(" · ")}</div>` : ""}
+    </a>`;
+  }).join("") || `<div class="empty">No givers match.</div>`);
+}
+function viewGiverDetail(id) {
+  const gv = giverById(id);
+  if (!gv) { view(`<div class="empty">That giver wasn't found.</div>`); return; }
+  const gifts = App.state.gifts.filter(g => g.giver_id === id).sort((a, b) => a.date_received.localeCompare(b.date_received));
+  const tel = gv.phone.replace(/[^\d+]/g, ""), addr = address(gv);
+  view(`<h1>${esc(gv.display_name)}</h1>
+    ${gv.side ? `<span class="chip">${esc(gv.side)}</span>` : ""}
+    <div class="card" style="margin-top:12px"><div class="contact">
+      ${gv.phone ? `<div class="kv"><span>Phone</span><span><a href="tel:${esc(tel)}">${esc(gv.phone)}</a> · <a href="sms:${esc(tel)}">text</a></span></div>` : ""}
+      ${gv.email ? `<div class="kv"><span>Email</span><a href="mailto:${esc(gv.email)}">${esc(gv.email)}</a></div>` : ""}
+      ${addr ? `<div class="kv"><span>Address</span><span style="white-space:pre-line">${esc(addr)}</span></div>` : ""}
+      ${gv.notes ? `<div class="kv"><span>Notes</span><span style="white-space:pre-line">${esc(gv.notes)}</span></div>` : ""}
+      ${!gv.phone && !gv.email && !addr && !gv.notes ? `<span class="muted">No contact details yet.</span>` : ""}
+    </div></div>
+    <div class="actions" style="margin-top:10px">
+      <a class="btn accent" href="#/add/giver/${esc(gv.id)}">+ Add a gift from them</a>
+      <a class="btn ghost" href="#/giver/${esc(gv.id)}/edit">Edit details</a></div>
+    <h3>${gifts.length} ${gifts.length === 1 ? "gift" : "gifts"}</h3>
+    ${gifts.length ? totalsStrip(gifts) + gifts.map(giftCard).join("") : `<div class="empty">No gifts recorded for this giver yet.</div>`}`);
+}
+function viewGiverPage(id) {
+  const gv = id ? giverById(id) : null;
+  if (id && !gv) { view(`<div class="empty">That giver wasn't found.</div>`); return; }
+  view(`<h1>${gv ? "Edit giver" : "New giver"}</h1>
+    <form id="giverForm" class="form" novalidate autocomplete="off">${giverFields(gv || {})}
+      <div id="formErr" class="formerr hidden"></div>
+      <div class="actions"><button class="btn" type="submit">Save</button>
+        <a class="btn ghost" href="${gv ? "#/giver/" + esc(gv.id) : "#/givers"}">Cancel</a>
+        ${gv ? `<button class="btn danger" type="button" id="delGiver">Delete giver</button>` : ""}</div>
+    </form>`);
+  const form = $("#giverForm");
+  form.addEventListener("input", () => { App.formDirty = true; });
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    try {
+      const newId = await Local.saveGiver(gv ? gv.id : null, Object.fromEntries(new FormData(form).entries()));
+      App.formDirty = false; toast("Giver saved"); location.hash = "#/giver/" + newId;
+    } catch (err) { showErr(err.message); }
+  });
+  if (gv) $("#delGiver").addEventListener("click", async () => {
+    if (gv.gift_count) return showErr(`${gv.display_name} still has ${gv.gift_count} gift(s) recorded. Delete those gifts first.`);
+    if (!confirm(`Delete ${gv.display_name}? This can't be undone.`)) return;
+    try { await Local.deleteGiver(gv.id); toast("Giver deleted"); location.hash = "#/givers"; } catch (err) { showErr(err.message); }
+  });
+}
+
+/* ===================== thank-yous ===================== */
+function viewThanks() {
+  const st = App.state;
+  const pending = st.gifts.filter(g => !g.thank_you_sent).sort((a, b) => a.date_received.localeCompare(b.date_received));
+  const sent = st.gifts.filter(g => g.thank_you_sent).sort((a, b) => (b.thank_you_date || "").localeCompare(a.thank_you_date || ""));
+  const tab = App.thanksTab, list = tab === "pending" ? pending : sent;
+  const keepDate = $("#tyDate") ? $("#tyDate").value : todayISO();
+  view(`<h1>Thank-you notes</h1>
+    <div class="segtabs"><button data-t="pending" class="${tab === "pending" ? "on" : ""}">To send (${pending.length})</button>
+      <button data-t="sent" class="${tab === "sent" ? "on" : ""}">Sent (${sent.length})</button></div>
+    ${tab === "pending" ? `<div class="form" style="margin-bottom:12px"><label for="tyDate" style="margin-top:0">Date notes were sent</label>
+      <input id="tyDate" type="date" value="${esc(keepDate)}" max="${todayISO()}"></div>` : ""}
+    ${list.length ? list.map(g => {
+      const gv = giverById(g.giver_id), addr = address(gv);
+      return `<div class="card">
+        <div class="row1"><a class="name" href="#/gift/${esc(g.id)}" style="color:inherit">${esc(g.giver_name)}</a>
+          <span class="amt c-${catClass(g)}">${esc(giftValueText(g))}</span></div>
+        <div class="what">${esc(details(g))}</div>
+        <div class="muted">Received ${fmtDate(g.date_received)}${g.event ? " · " + esc(g.event) : ""}</div>
+        ${tab === "pending" ? (addr ? `<div class="addr">${esc(gv.display_name)}\n${esc(addr)}</div>`
+                                    : `<div class="hint">No mailing address yet — <a href="#/giver/${esc(g.giver_id)}/edit">add one</a>.</div>`) : ""}
+        <div class="cardrow">${tab === "pending"
+          ? `<span class="ty pending" style="margin:0">Not sent yet</span><button class="btn ok small" data-mark="${esc(g.id)}">✓ Mark sent</button>`
+          : `<span class="ty sent" style="margin:0">✓ Sent ${fmtDate(g.thank_you_date)}</span><button class="btn ghost small" data-undo="${esc(g.id)}">Undo</button>`}</div>
+      </div>`;
+    }).join("") : `<div class="empty">${tab === "pending" ? (st.gifts.length ? "All thank-you notes are sent. Well done!" : "No gifts recorded yet.") : "No thank-you notes marked as sent yet."}</div>`}`);
+  $$(".segtabs button").forEach(b => b.addEventListener("click", () => { App.thanksTab = b.dataset.t; viewThanks(); }));
+  $$("[data-mark]").forEach(b => b.addEventListener("click", () => markThanks(b.dataset.mark, true)));
+  $$("[data-undo]").forEach(b => b.addEventListener("click", () => markThanks(b.dataset.undo, false)));
+}
+async function markThanks(id, sent) {
+  const date = $("#tyDate") ? $("#tyDate").value : todayISO();
+  try { await Local.markThanks(id, sent, date); viewThanks(); toast(sent ? "Marked as sent" : "Moved back to To send"); }
+  catch (err) { alert(err.message); }
+}
+
+/* ===================== report ===================== */
+function viewReport() {
+  const rep = getReport();
+  view(`<div class="report">
+    <div class="actions no-print" style="margin-top:0">
+      <button class="btn" id="printBtn" type="button">Print / Save as PDF</button>
+      <button class="btn ghost" id="xlsxBtn" type="button">Excel file</button>
+      <button class="btn ghost" id="htmlBtn" type="button">Report file</button>
+    </div>
+    ${ANDROID ? "" : `<p class="hint no-print">If printing does nothing on your phone, tap <b>Report file</b>, open it, and print or save it as PDF from there.</p>`}
+    <div style="margin-top:14px">${reportMarkup(rep)}</div></div>`);
+  $("#printBtn").addEventListener("click", printReport);
+  $("#xlsxBtn").addEventListener("click", () => deliverFile(reportXlsx(), `Wedding Gifts Report ${todayISO()}.xlsx`));
+  $("#htmlBtn").addEventListener("click", () => deliverFile(reportFileBlob(), `Wedding Gifts Report ${todayISO()}.html`));
+}
+
+/* ===================== settings & backup ===================== */
+async function viewSettings() {
+  const st = App.state, m = st.meta || {};
+  let persisted = null;
+  try { if (navigator.storage && navigator.storage.persisted) persisted = await navigator.storage.persisted(); } catch (e) {}
+  view(`<h1>Settings &amp; backup</h1>
+    <form id="setForm" class="form" novalidate>
+      <label for="scouple">Couple's names (shown on the report)</label>
+      <input id="scouple" name="couple" value="${esc(st.settings.couple)}" placeholder="e.g. Emma Vang & Joshua Lee">
+      <label for="swdate">Wedding date</label>
+      <input id="swdate" name="wedding_date" type="date" value="${esc(st.settings.wedding_date)}">
+      <div id="formErr" class="formerr hidden"></div>
+      <div class="actions"><button class="btn" type="submit">Save</button></div>
+    </form>
+    <h3>This phone</h3>
+    <div class="form"><label for="sme" style="margin-top:0">Your name (recorded with gifts you enter)</label>
+      <input id="sme" value="${esc(App.me)}" placeholder="e.g. Mom"></div>
+
+    <h3>Backup &amp; sharing between phones</h3>
+    <div class="card">
+      <div class="muted">Records are stored only on this phone${ANDROID ? " (inside the Wedding Gifts app)" : ""}. Last backup:
+        <b>${m.last_backup ? new Date(m.last_backup).toLocaleString() : "never"}</b>${m.changes_since_backup ? ` · ${m.changes_since_backup} change(s) since` : ""}.</div>
+      <div class="linklist" style="margin-top:10px">
+        <button class="btn accent" type="button" id="bkBtn">Save backup file</button>
+        <button class="btn ghost" type="button" id="rsBtn">Restore or merge a backup file</button>
+      </div>
+      <p class="hint">To combine two phones: save a backup on phone A, send the file to phone B (AirDrop, Nearby Share, text or email),
+        then tap <b>Restore or merge</b> on phone B. New records are added and the newest version of each changed record wins; records only on phone B are kept.</p>
+    </div>
+
+    <h3>Export</h3>
+    <div class="linklist">
+      <button class="btn ghost" type="button" id="exX">Excel report (.xlsx)</button>
+      <button class="btn ghost" type="button" id="exG">All gifts (.csv)</button>
+      <button class="btn ghost" type="button" id="exA">Givers &amp; addresses (.csv) for mail merge</button>
+    </div>
+    <p class="hint" style="margin-top:12px">Works with no internet or Wi-Fi. Nothing you enter is sent anywhere.
+      Storage: ${Store.mode === "indexeddb" ? "on-device database" : "browser storage"}${persisted === true ? ", protected from automatic clean-up" : ""}.
+      ${(ANDROID || isStandalone()) ? "" : (isTouch() ? "<br><b>Tip:</b> add this app to your Home Screen and always open it from there." : "")}</p>
+
+    <div class="danger-zone">
+      <button class="btn danger small" type="button" id="eraseBtn">Erase all records on this phone</button>
+    </div>`);
+  $("#sme").addEventListener("change", e => { App.me = e.target.value.trim(); localStorage.setItem("gt_me", App.me); toast("Saved on this phone"); });
+  $("#setForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    try { await Local.saveSettings(Object.fromEntries(new FormData(e.target).entries())); toast("Settings saved"); }
+    catch (err) { showErr(err.message); }
+  });
+  $("#bkBtn").addEventListener("click", saveBackup);
+  $("#rsBtn").addEventListener("click", () => $("#restoreFile").click());
+  $("#exX").addEventListener("click", () => deliverFile(reportXlsx(), `Wedding Gifts Report ${todayISO()}.xlsx`));
+  $("#exG").addEventListener("click", () => deliverFile(giftsCsv(), `Wedding Gifts ${todayISO()}.csv`));
+  $("#exA").addEventListener("click", () => deliverFile(giversCsv(), `Wedding Gift Givers ${todayISO()}.csv`));
+  $("#eraseBtn").addEventListener("click", async () => {
+    if (!confirm("Erase ALL gift records on this phone? Save a backup first if you may need them.")) return;
+    if (prompt('Type ERASE to confirm.') !== "ERASE") return;
+    DB = emptyDB(); await Store.save(DB); App.state = buildState(); updateChrome(); toast("All records erased"); location.hash = "#/gifts";
+  });
+}
+
+/* ===================== start ===================== */
+(async function start() {
+  try {
+    DB = await Store.load();
+    if (!DB || DB.format !== "wedding-gift-tracker") DB = emptyDB();
+    DB.meta = DB.meta || {created_at: nowISO(), last_backup: null, changes_since_backup: 0};
+    DB.settings = DB.settings || {couple: "", wedding_date: ""};
+    App.state = buildState(); updateChrome();
+  } catch (e) {
+    view(`<div class="empty">This browser can't store data here (${esc(e.message || e)}). If you are in private browsing mode, turn it off.</div>`);
+    return;
+  }
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  if (!ANDROID && "serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname))) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+  router();
+})();
+</script>
+</body>
+</html>

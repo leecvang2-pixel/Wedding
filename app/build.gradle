@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Each GitHub build gets a higher version number so phones accept it as an update.
+def buildNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+def keystorePath = System.getenv("SIGNING_KEYSTORE_FILE")
+
+android {
+    namespace 'com.weddinggifts.tracker'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.weddinggifts.tracker"
+        minSdk 26          // Android 8.0 and newer
+        targetSdk 34
+        versionCode buildNumber
+        versionName "1.0." + buildNumber
+    }
+
+    signingConfigs {
+        family {
+            if (keystorePath) {
+                storeFile file(keystorePath)
+                storePassword System.getenv("SIGNING_PASSWORD")
+                keyAlias "weddinggifts"
+                keyPassword System.getenv("SIGNING_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Your own key when the GitHub secrets are set; otherwise a temporary debug key.
+            signingConfig keystorePath ? signingConfigs.family : signingConfigs.debug
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.core:core:1.13.1'
+}
